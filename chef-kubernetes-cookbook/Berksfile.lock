@@ -1,0 +1,9 @@
+DEPENDENCIES
+  kubernetes-cookbook
+    path: .
+    metadata: true
+
+GRAPH
+  habitat (0.53.0)
+  kubernetes-cookbook (0.1.0)
+    habitat (>= 0.0.0)

@@ -1,0 +1,30 @@
+{
+  "CN": "kubernetes",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "hosts": [
+    {{#if cfg.external.ip ~}}
+    "{{cfg.external.ip}}",
+    {{/if ~}}
+    {{#if cfg.external.name ~}}
+    "{{cfg.external.name}}",
+    {{/if ~}}
+    {{#each svc.members as |member| ~}}
+    "{{member.sys.hostname}}",
+    "{{member.sys.ip}}",
+    {{/each ~}}
+    "127.0.0.1",
+    "kubernetes.default"
+  ],
+  "names": [
+    {
+      "C": "US",
+      "L": "Overland Park",
+      "O": "Kubernetes",
+      "OU": "Kubernetes",
+      "ST": "Kansas"
+    }
+  ]
+}

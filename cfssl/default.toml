@@ -1,0 +1,55 @@
+# Use this file to templatize your application's native configuration files.
+# See the docs at https://www.habitat.sh/docs/create-packages-configure/.
+# You can safely delete this file if you don't need it.
+
+[api]
+  port = 8888
+
+[root]
+
+[root.signing.default]
+  expiry = "43830h"
+  usages = ["cert sign"]
+
+[root.signing.default.ca_constraint]
+  is_ca = "true"
+
+[config]
+
+[config.signing.default]
+  expiry = "8760h"
+  usages = ["signing", "key encipherment", "server auth", "client auth"]
+
+[config.profiles.ca]
+  expiry = "8760h"
+  usages = ["cert sign"]
+
+[config.profiles.ca.ca_constraint]
+  is_ca = "true"
+
+[config.profiles.server]
+  usages = ["signing", "key encipherment", "server auth"]
+  expiry = "8760h"
+
+[config.profiles.client]
+  usages = ["signing", "key encipherment", "client auth"]
+  expiry = "8760h"
+
+[config.profiles.peer]
+  usages = ["signing", "key encipherment", "server auth", "client auth"]
+  expiry = "8760h"
+
+
+[ca]
+  CN = "Certificate Authority"
+
+[ca.key]
+  algo = "rsa"
+  size = 2048
+
+[[ca.names]]
+  C = "US"
+  L = "Overland Park"
+  O = "Cerny"
+  OU = "CA"
+  ST = "Kansas"

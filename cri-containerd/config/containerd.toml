@@ -1,0 +1,4 @@
+root = "{{pkg.svc_data_path}}"
+state = "{{pkg.svc_var_path}}"
+
+{{toToml cfg.containerd}}

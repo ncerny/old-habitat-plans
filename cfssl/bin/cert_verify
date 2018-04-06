@@ -1,0 +1,53 @@
+#!/bin/bash
+source /hab/svc/cfssl/config/cfssl_common
+
+name="$1"
+shift
+log debug "Checking ${name} certificate validity."
+if [ ! -f "$name" ]; then
+  log debug "$name certificate does not exist!"
+  exit $CERT_NOEXIST
+fi
+
+certdata=$(cat ${name} | jq -sR .)
+certdata=$(echo "{\"certificate\": ${certdata}}" | jq -c .)
+log debug "certdata=$(echo ${certdata} | jq .)"
+
+certinfo=$(ca_api POST certinfo ${certdata})
+log debug "certinfo=$(echo ${certinfo} | jq .)"
+
+if [ "$(echo ${certinfo} | jq .success)" == "false" ]; then
+  log info "Certificate ${name} is not valid."
+  exit $CERT_INVALID
+fi
+
+if [ -n "$*" ]; then
+  if [ "$(echo ${certinfo} | jq .result.sans)" == "null" ]; then
+    log debug "Certificate contains no hosts!"
+    exit $CERT_INVALID
+  fi
+
+  sans=$(echo ${certinfo} | jq .result.sans[])
+  for host in "$*"; do
+    if [ -z "${sans[$host]}" ]; then
+      log debug "$host does not exist on certificate!"
+      exit $CERT_INVALID
+    fi
+  done
+fi
+
+cert_exp=$(echo ${certinfo} | jq .result.not_after)
+log debug "cert_exp=${cert_exp}"
+cert_exp="${cert_exp/T/ }"
+log debug "cert_exp=${cert_exp}"
+cert_exp="${cert_exp//[Z\"]/}"
+log debug "cert_exp=${cert_exp}"
+calc_exp=$(date +%s -d "${cert_exp}")
+log debug "calc_exp=${calc_exp}"
+renew=$(( $(date +%s)+30*60*60*24 ))
+log debug "renew=${renew}"
+if [[ $cert_exp < $renew ]]; then
+  log debug "${name} certificate is about to (or has) expired."
+  exit $CERT_EXPIRED
+fi
+exit $CERT_VALID

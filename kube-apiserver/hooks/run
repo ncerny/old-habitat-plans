@@ -1,0 +1,82 @@
+#!/bin/bash
+
+exec 2>&1
+
+cd "{{pkg.svc_path}}"
+
+group="{{pkg.name}}.$(awk '/group/ { print $3 }' /hab/sup/default/specs/{{pkg.name}}.spec)"
+group=${group//\"/}
+
+if [[ -n "{{cfg.advertise-address}}" ]]; then
+  advertise_address="{{cfg.advertise-address}}"
+fi
+
+etcd_servers="{{#each bind.kvstore.members as |member| ~}}https://{{member.sys.ip}}:{{member.cfg.client-port}},{{/each ~}}"
+
+ca_update '{{pkg.svc_static_path}}/ca'
+if [[ ! $(cert_verify {{pkg.svc_static_path}}/{{sys.hostname}}.pem {{sys.hostname}} {{sys.ip}}) ]]; then
+  cert_gen {{pkg.svc_static_path}}/{{sys.hostname}}.pem peer {{pkg.svc_config_path}}/node-csr.json
+fi
+if [[ ! $(cert_verify {{pkg.svc_files_path}}/kubernetes.pem {{sys.hostname}} {{sys.ip}}) ]]; then
+  cert_gen {{pkg.svc_static_path}}/kubernetes.pem server {{pkg.svc_config_path}}/tls-csr.json
+
+  cert_upload $group {{pkg.svc_static_path}}/kubernetes.pem {{pkg.svc_static_path}}/kubernetes-key.pem
+  rm {{pkg.svc_static_path}}/kubernetes.pem {{pkg.svc_static_path}}/kubernetes-key.pem
+fi
+
+if [ ! -f "{{pkg.svc_files_path}}/encryption-config.yaml" ]; then
+  ENCRYPTION_KEY="{{cfg.encryption_key}}"
+  if [ -z "$ENCRYPTION_KEY" ]; then
+    ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
+  fi
+  cat > {{pkg.svc_static_path}}/encryption-config.yaml <<EOF
+kind: EncryptionConfig
+apiVersion: v1
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+            - name: key1
+              secret: ${ENCRYPTION_KEY}
+      - identity: {}
+EOF
+  cert_upload $group {{pkg.svc_static_path}}/encryption-config.yaml
+  rm {{pkg.svc_static_path}}/encryption-config.yaml
+fi
+members=({{#each svc.members as |member| ~}}{{member.sys.hostname ~}} {{/each ~}})
+
+exec {{pkgPathFor "ncerny/kubernetes"}}/bin/kube-apiserver \
+  --admission-control=Initializers,NamespaceLifecycle,NodeRestriction,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,AlwaysPullImages \
+  --advertise-address="{{sys.ip}}" \
+  --allow-privileged=true \
+  --apiserver-count="${#members[*]}" \
+  --enable-swagger-ui=true \
+  --audit-log-maxage=30 \
+  --audit-log-maxbackup=3 \
+  --audit-log-maxsize=100 \
+  --audit-log-path=/var/log/audit.log \
+  --authorization-mode=Node,RBAC \
+  --bind-address="0.0.0.0" \
+  --client-ca-file="{{pkg.svc_static_path}}/ca.pem" \
+  --enable-swagger-ui=true \
+  --etcd-cafile="{{pkg.svc_static_path}}/ca.pem" \
+  --etcd-certfile="{{pkg.svc_static_path}}/{{sys.hostname}}.pem" \
+  --etcd-keyfile="{{pkg.svc_static_path}}/{{sys.hostname}}-key.pem" \
+  --etcd-servers="${etcd_servers%?}" \
+  --event-ttl=1h \
+  --experimental-encryption-provider-config="{{pkg.svc_files_path}}/encryption-config.yaml" \
+  --insecure-bind-address="127.0.0.1" \
+  --kubelet-certificate-authority="{{pkg.svc_static_path}}/ca.pem" \
+  --kubelet-client-certificate="{{pkg.svc_static_path}}/{{sys.hostname}}.pem" \
+  --kubelet-client-key="{{pkg.svc_static_path}}/{{sys.hostname}}-key.pem" \
+  --kubelet-https=true \
+  --runtime-config="api/all,admissionregistration.k8s.io/v1alpha1" \
+  --service-cluster-ip-range="{{cfg.service-cluster-ip-range}}" \
+  --service-node-port-range="{{cfg.service-node-port-range}}" \
+  --cert-dir="{{pkg.svc_static_path}}" \
+  --tls-ca-file="{{pkg.svc_static_path}}/ca.pem" \
+  --tls-cert-file="{{pkg.svc_files_path}}/kubernetes.pem" \
+  --tls-private-key-file="{{pkg.svc_files_path}}/kubernetes-key.pem" \
+  --v=2

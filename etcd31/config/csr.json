@@ -1,0 +1,20 @@
+{
+  "CN": "{{sys.hostname}}",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "hosts": [
+    "{{sys.hostname}}",
+    "{{sys.ip}}"
+  ],
+  "names": [
+    {
+      "C": "US",
+      "L": "Overland Park",
+      "O": "Kubernetes",
+      "OU": "etcd",
+      "ST": "Kansas"
+    }
+  ]
+}

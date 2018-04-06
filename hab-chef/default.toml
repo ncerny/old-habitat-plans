@@ -1,0 +1,15 @@
+# Use this file to templatize your application's native configuration files.
+# See the docs at https://www.habitat.sh/docs/create-packages-configure/.
+# You can safely delete this file if you don't need it.
+
+# Chef-Zero doesn't seem to play nice when daemonized.  We'll let habitat manage the interval.
+interval = 1800
+splay = 1800
+
+runlist = [
+  "recipe[smoke_test]",
+]
+
+[configuration]
+local_mode = "true"
+environment = "_default"

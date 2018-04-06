@@ -1,0 +1,20 @@
+{
+  "CN": "{{member.sys.hostname}}",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "hosts": [
+    "{{member.sys.hostname}}",
+    "{{member.sys.ip}}"
+  ],
+  "names": [
+    {
+      "C": "US",
+      "L": "Overland Park",
+      "O": "Kubernetes",
+      "OU": "Kubernetes Cluster Signing CA",
+      "ST": "Kansas"
+    }
+  ]
+}

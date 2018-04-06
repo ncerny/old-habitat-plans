@@ -1,0 +1,18 @@
+#!/bin/bash
+source /hab/svc/cfssl/config/cfssl_common
+
+name=$1
+shift
+profile=$1
+shift
+csr=$1
+shift
+
+hosts=$*
+hostname="-hostname=$(join_by , ${hosts})"
+
+if [ ! $(cert_verify "${name}" ${hosts}) ]; then
+  log debug "Issuing new certificate for ${name}."
+  certdata=$(echo "{\"request\": $(cat ${csr} | jq -c .), \"profile\": \"${profile}\", \"bundle\": true}" | jq -c .)
+  ca_api POST newcert ${certdata} | cfssljson ${name%.*}
+fi

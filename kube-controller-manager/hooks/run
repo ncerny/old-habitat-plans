@@ -1,0 +1,23 @@
+#!/bin/bash
+
+exec 2>&1
+
+cd {{pkg.svc_data_path}}
+
+ca_update '{{pkg.svc_static_path}}/ca'
+if [[ ! $(cert_verify {{pkg.svc_static_path}}/{{sys.hostname}}.pem {{sys.hostname}} {{sys.ip}}) ]]; then
+  cert_gen {{pkg.svc_static_path}}/{{sys.hostname}}.pem ca {{pkg.svc_config_path}}/ca-csr.json
+fi
+
+exec kube-controller-manager \
+  --address="{{cfg.address}}" \
+  --cluster-name=kubernetes \
+  --cluster-cidr="{{cfg.cluster-cidr}}" \
+  --cluster-signing-cert-file="{{pkg.svc_static_path}}/{{sys.hostname}}.pem" \
+  --cluster-signing-key-file="{{pkg.svc_static_path}}/{{sys.hostname}}-key.pem" \
+  --leader-elect=true \
+  --master="http://127.0.0.1:8080" \
+  --root-ca-file="{{pkg.svc_static_path}}/ca.pem" \
+  --service-account-private-key-file="{{pkg.svc_static_path}}/{{sys.hostname}}-key.pem" \
+  --service-cluster-ip-range="{{cfg.service-cluster-ip-range}}" \
+  --v=2

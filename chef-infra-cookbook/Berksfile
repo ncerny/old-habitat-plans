@@ -1,0 +1,6 @@
+# frozen_string_literal: true
+source 'https://supermarket.chef.io'
+
+metadata
+
+cookbook 'habitat', git: 'https://github.com/ncerny/habitat-1.git'

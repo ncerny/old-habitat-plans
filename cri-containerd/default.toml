@@ -1,0 +1,11 @@
+[containerd]
+  oom_score = 0
+
+[containerd.grpc]
+  uid = 0
+  gid = 0
+
+[containerd.debug]
+  uid = 0
+  gid = 0
+  level = "info"

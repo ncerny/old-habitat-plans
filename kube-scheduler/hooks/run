@@ -1,0 +1,10 @@
+#!/bin/bash
+
+exec 2>&1
+
+cd {{pkg.svc_path}}
+
+exec kube-scheduler \
+  --leader-elect=true \
+  --master=http://127.0.0.1:8080 \
+  --v=2

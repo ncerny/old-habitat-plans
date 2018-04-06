@@ -1,0 +1,32 @@
+#!/bin/bash
+source /hab/svc/cfssl/config/cfssl_common
+cd {{pkg.svc_data_path}}
+
+dir="{{pkg.svc_files_path}}"
+ca="${dir}/ca.pem"
+key="${dir}/ca-key.pem"
+
+{{#unless svc.me.follower ~}}
+  group="{{pkg.name}}.$(awk '/group/ { print $3 }' /hab/sup/default/specs/{{pkg.name}}.spec)"
+  group=${group//\"/}
+  log info "Checking Certificate Authority validity."
+  case $(cert_verify ${ca}) in
+    $CERT_VALID)
+      log info "Certificate Authority is valid."
+      ;;
+    $CERT_EXPIRED)
+      log info "Renewing current certificate authority."
+      cfssl gencert -renewca -ca "${ca}" -ca-key "${key}" -config "{{pkg.svc_config_path}}/root-config.json" | cfssljson -bare ca
+      cert_upload ${group} ca.pem ca-key.pem
+      rm ca.pem ca-key.pem
+      ;;
+    *)
+      log info "Generating new certificate authority."
+      cfssl gencert -initca "{{pkg.svc_config_path}}/ca-csr.json" -config "{{pkg.svc_config_path}}/root-config.json" | cfssljson -bare ca
+      cert_upload ${group} ca.pem ca-key.pem
+      rm ca.pem ca-key.pem ca.csr
+	    ;;
+  esac
+{{/unless ~}}
+
+exec cfssl serve -address {{sys.ip}} -port {{cfg.api.port}} -ca $ca -ca-key $key -int-dir $dir -config "{{pkg.svc_config_path}}/ca-config.json"

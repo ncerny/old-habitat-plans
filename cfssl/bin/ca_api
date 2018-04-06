@@ -1,0 +1,17 @@
+#!/bin/bash
+source /hab/svc/cfssl/config/cfssl_common
+
+method=$1
+endpoint=$2
+shift
+shift
+
+if [[ -z "$ca_url" ]]; then
+	log info "A Certificate Authority bind was not set, or there are no servers up."
+	exit 1
+fi
+if [[ -z "$*" ]]; then
+	curl -sS -X $method -H 'Content-Type: application/json' $ca_url/$endpoint
+else
+  curl -sS -X $method -H 'Content-Type: application/json' -d "$(echo $* | jq -c .)" $ca_url/$endpoint
+fi

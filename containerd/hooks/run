@@ -1,0 +1,10 @@
+#!{{pkgPathFor "core/bash"}}/bin/bash
+
+exec 2>&1
+
+{{pkgPathFor "core/kmod"}}/bin/modprobe overlay
+if [ "$?" -ne 0 ]; then
+  echo "overlay module not loaded!"
+fi
+
+exec {{pkg.path}}/bin/containerd

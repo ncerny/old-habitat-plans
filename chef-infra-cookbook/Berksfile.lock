@@ -1,0 +1,12 @@
+DEPENDENCIES
+  habitat
+    git: https://github.com/ncerny/habitat-1.git
+    revision: 91a218670f06598cfe2c69329991801f44ccf3cc
+  infra-cookbook
+    path: .
+    metadata: true
+
+GRAPH
+  habitat (0.53.3)
+  infra-cookbook (0.2.0)
+    habitat (>= 0.0.0)

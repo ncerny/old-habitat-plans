@@ -1,0 +1,5 @@
+#!/bin/sh
+exec 2>&1
+
+grep "{{pkg.version}}-{{pkg.ident}}" {{pkg.svc_data_path}}/cache/smoke_test
+exit $?

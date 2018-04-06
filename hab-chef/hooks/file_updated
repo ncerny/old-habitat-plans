@@ -1,0 +1,5 @@
+#!/bin/sh
+exec 2>&1
+
+cd {{pkg.svc_data_path}}
+{{pkgPathFor "core/tar"}}/bin/tar xvzf {{pkg.svc_files_path}}/*.tar.gz && rm {{pkg.svc_files_path}}/*.tar.gz

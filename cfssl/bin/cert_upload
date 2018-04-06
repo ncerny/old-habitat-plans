@@ -1,0 +1,10 @@
+#!/bin/bash
+source /hab/svc/cfssl/config/cfssl_common
+
+version=$(date +%s)
+group=$1
+shift
+
+for cert in $*; do
+  hab-butterfly file upload ${group} ${version} ${cert}
+done

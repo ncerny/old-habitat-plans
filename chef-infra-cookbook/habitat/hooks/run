@@ -1,0 +1,23 @@
+#!/bin/sh
+export GEM_HOME={{pkgPathFor "ncerny/chef"}}/lib/ruby/2.4.0
+export GEM_PATH={{pkgPathFor "core/ruby24"}}/lib/ruby/2.4.0:$GEM_HOME
+
+{{#if cfg.splay ~}}
+  splay={{cfg.splay}}
+{{else ~}}
+  splay=1
+{{/if ~}}
+{{#if cfg.interval ~}}
+  interval={{cfg.interval}}
+  sleep $((RANDOM % splay))
+  while true; do
+  APPBUNDLER_ALLOW_RVM="true" chef-client \
+    --runlist "recipe[{{pkg.name}}::default]" \
+    --config "{{pkg.svc_config_path}}/client.rb"
+  sleep $interval
+  done
+{{else ~}}
+  APPBUNDLER_ALLOW_RVM="true" chef-client \
+    --runlist "recipe[{{pkg.name}}::default]" \
+    --config "{{pkg.svc_config_path}}/client.rb"
+{{/if ~}}

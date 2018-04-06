@@ -1,0 +1,37 @@
+#!/bin/sh
+
+cat > {{pkg.svc_config_path}}/client.rb << EOF
+# Set by Build Configuration
+node_name "{{sys.hostname}}-{{sys.member_id}}"
+chef_repo_path "{{pkg.svc_data_path}}"
+cookbook_path ["{{pkg.svc_data_path}}/cookbooks","{{pkg.path}}/lib/cookbooks"]
+data_bag_path "{{pkg.svc_data_path}}/data_bags"
+node_path "{{pkg.svc_data_path}}/nodes"
+role_path "{{pkg.svc_data_path}}/roles"
+environment_path "{{pkg.svc_data_path}}/environments"
+cache_path "{{pkg.svc_data_path}}/cache"
+file_cache_path "{{pkg.svc_data_path}}/cache/files"
+file_backup_path "{{pkg.svc_data_path}}/cache/backup"
+log_location "{{pkg.svc_path}}/logs/client.log"
+
+# Set by User Configuration
+{{#each cfg.configuration ~}}
+{{#if this ~}}
+{{@key}} {{this}}
+{{else ~}}
+{{@key}}
+{{/if ~}}
+{{/each ~}}
+EOF
+
+for dir in cookbooks data_bags nodes roles environments; do
+  mkdir -p {{pkg.svc_data_path}}/$dir
+done
+
+export GEM_HOME={{pkg.path}}/lib/ruby/2.4.0
+export GEM_PATH={{pkgPathFor "core/ruby24"}}/lib/ruby/2.4.0
+
+APPBUNDLER_ALLOW_RVM="true" exec chef-client \
+  --local-mode --once \
+  --override-runlist 'recipe[smoke_test]' \
+  --config {{pkg.svc_config_path}}/client.rb

@@ -1,0 +1,5 @@
+#!/bin/bash
+source /hab/svc/cfssl/config/cfssl_common
+if [[ ! $(cert_verify ${1}.pem) ]]; then
+  ca_api POST info "{\"label\": \"${1##*/}\"}" | cfssljson $1
+fi
