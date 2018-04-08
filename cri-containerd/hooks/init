@@ -1,4 +1,4 @@
-#!{{pkgPathFor "core/bash"}}/bin/bash
+#!/bin/bash
 
 {{pkgPathFor "core/kmod"}}/bin/modprobe overlay
 if [ "$?" -ne 0 ]; then

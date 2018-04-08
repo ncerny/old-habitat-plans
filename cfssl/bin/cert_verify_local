@@ -6,30 +6,21 @@ shift
 log debug "Checking ${name} certificate validity."
 if [ ! -f "$name" ]; then
   log debug "$name certificate does not exist!"
+  echo "CERT_NOEXIST"
   exit $CERT_NOEXIST
 fi
 
-certdata=$(cat ${name} | jq -sR .)
-certdata=$(echo "{\"certificate\": ${certdata}}" | jq -c .)
-log debug "certdata=$(echo ${certdata} | jq .)"
-
-certinfo=$(ca_api POST certinfo ${certdata})
+certinfo=$(cfssl certinfo -cert ${name})
 log debug "certinfo=$(echo ${certinfo} | jq .)"
 
-if [ "$(echo ${certinfo} | jq .success)" == "false" ]; then
-  log info "Certificate ${name} is not valid."
-  echo "CERT_INVALID"
-  exit $CERT_INVALID
-fi
-
-if [ -n "$1" ]; then
-  if [ "$(echo ${certinfo} | jq .result.sans)" == "null" ]; then
+if [ -n "$*" ]; then
+  if [ "$(echo ${certinfo} | jq .sans)" == "null" ]; then
     log debug "Certificate contains no hosts!"
     echo "CERT_INVALID"
     exit $CERT_INVALID
   fi
 
-  sans=$(echo ${certinfo} | jq .result.sans[])
+  sans=$(echo ${certinfo} | jq .sans[])
   for host in "$*"; do
     if [ -z "${sans[$host]}" ]; then
       log debug "$host does not exist on certificate!"
@@ -39,7 +30,7 @@ if [ -n "$1" ]; then
   done
 fi
 
-cert_exp=$(echo ${certinfo} | jq .result.not_after)
+cert_exp=$(echo ${certinfo} | jq .not_after)
 log debug "cert_exp=${cert_exp}"
 cert_exp="${cert_exp/T/ }"
 log debug "cert_exp=${cert_exp}"
