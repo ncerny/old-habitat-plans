@@ -29,10 +29,16 @@ if [ -n "$1" ]; then
     exit $CERT_INVALID
   fi
 
-  sans=$(echo ${certinfo} | jq .result.sans[])
   for host in "$*"; do
-    if [ -z "${sans[$host]}" ]; then
-      log debug "$host does not exist on certificate!"
+    host=${host//\"/}
+    host_exist=false
+    for san in $(echo ${certinfo} | jq .result.sans[]); do
+      if [[ $host == ${san//\"/} ]]; then
+        host_exist=true
+      fi
+    done
+    if [[ $host_exist == false ]]; then
+      log debug "$host does not exist on certificate"
       echo "CERT_INVALID"
       exit $CERT_INVALID
     fi

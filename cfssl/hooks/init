@@ -4,6 +4,8 @@ dir="{{pkg.svc_files_path}}"
 ca="${dir}/ca.pem"
 key="${dir}/ca-key.pem"
 
+cd {{pkg.svc_data_path}}
+
 {{~#if svc.me.follower}}
   if [ ! -f "$ca" ]; then
     sleep 1
