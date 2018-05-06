@@ -1,0 +1,51 @@
+#!/bin/bash
+
+exec 2>&1
+
+cd "{{pkg.svc_path}}"
+
+ca_update '{{pkg.svc_static_path}}/ca'
+if [[ ! $(cert_verify {{pkg.svc_static_path}}/{{sys.hostname}}.pem {{sys.hostname}} {{sys.ip}}) ]]; then
+  cert_gen {{pkg.svc_static_path}}/{{sys.hostname}}.pem peer {{pkg.svc_config_path}}/node-csr.json
+fi
+
+{{#if svc.me.leader}}
+
+group="{{pkg.name}}.$(awk '/group/ { print $3 }' /hab/sup/default/specs/{{pkg.name}}.spec)"
+group=${group//\"/}
+members=({{#each svc.members as |member| ~}}{{member.sys.hostname ~}} {{member.sys.ip ~}} {{/each ~}})
+if [[ ! $(cert_verify {{pkg.svc_files_path}}/kubernetes.pem ${members[@]}) ]]; then
+  cert_gen {{pkg.svc_static_path}}/kubernetes.pem server {{pkg.svc_config_path}}/tls-csr.json
+
+  cert_upload $group {{pkg.svc_static_path}}/kubernetes.pem {{pkg.svc_static_path}}/kubernetes-key.pem
+  rm {{pkg.svc_static_path}}/kubernetes.pem {{pkg.svc_static_path}}/kubernetes-key.pem
+fi
+
+if [ ! -f "{{pkg.svc_files_path}}/encryption-config.yaml" ]; then
+  ENCRYPTION_KEY="{{cfg.encryption_key}}"
+  if [ -z "$ENCRYPTION_KEY" ]; then
+    ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
+  fi
+  cat > {{pkg.svc_static_path}}/encryption-config.yaml <<EOF
+kind: EncryptionConfig
+apiVersion: v1
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+            - name: key1
+              secret: ${ENCRYPTION_KEY}
+      - identity: {}
+EOF
+  cert_upload $group {{pkg.svc_static_path}}/encryption-config.yaml
+  rm {{pkg.svc_static_path}}/encryption-config.yaml
+fi
+
+{{#else}}
+
+if [ ! -f "{{pkg.svc_files_path}}/kubernetes.pem" ] || [ ! -f "{{pkg.svc_files_path}}/encryption-config.yaml" ]; then
+  sleep 10
+  exit 1
+fi

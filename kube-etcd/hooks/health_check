@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -euo pipefail
+
+cd {{pkg.svc_path}}
+
+curl_opts=""
+
+curl_opts="${curl_opts} --insecure"
+curl_opts="${curl_opts} --cacert {{pkg.svc_static_path}}/ca.pem --cert {{pkg.svc_static_path}}/{{sys.hostname}}-client.pem --key {{pkg.svc_static_path}}/{{sys.hostname}}-client-key.pem"
+
+if curl -sS ${curl_opts} "https://{{sys.ip}}:{{cfg.etcd-client-end}}/health" | grep -q "true"; then
+  exit 0
+fi
+
+echo "etcd node unhealthy"
+exit 2

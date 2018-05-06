@@ -28,8 +28,8 @@ for dir in cookbooks data_bags nodes roles environments; do
   mkdir -p {{pkg.svc_data_path}}/$dir
 done
 
-export GEM_HOME={{pkg.path}}/lib/ruby/2.4.0
-export GEM_PATH={{pkgPathFor "core/ruby24"}}/lib/ruby/2.4.0
+export GEM_HOME={{pkg.path}}/lib/ruby/2.5.0
+export GEM_PATH={{pkgPathFor ruby}}/lib/ruby/2.5.0
 
 APPBUNDLER_ALLOW_RVM="true" exec chef-client \
   --local-mode --once \

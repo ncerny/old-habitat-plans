@@ -1,0 +1,12 @@
+#!/bin/bash
+
+mkdir -p {{pkg.svc_var_path}}/cni/net.d
+
+ca_update '{{pkg.svc_static_path}}/ca'
+if [[ ! $(cert_verify {{pkg.svc_static_path}}/{{sys.hostname}}.pem {{sys.hostname}} {{sys.ip}}) ]]; then
+  cert_gen {{pkg.svc_static_path}}/{{sys.hostname}}.pem peer {{pkg.svc_config_path}}/node-csr.json
+fi
+
+for bin in $(ls {{pkgPathFor "ncerny/cni-plugins"}}/bin); do
+  hab pkg binlink -d /opt/cni/bin ncerny/cni-plugins $bin
+done

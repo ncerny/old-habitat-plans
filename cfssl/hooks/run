@@ -9,4 +9,4 @@ exec cfssl serve \
   -ca {{pkg.svc_files_path}}/ca.pem \
   -ca-key {{pkg.svc_files_path}}/ca-key.pem \
   -int-dir {{pkg.svc_files_path}} \
-  -config {{pkg.svc_config_path}}/ca-config.json
+  -config {{pkg.svc_config_path}}/config.json

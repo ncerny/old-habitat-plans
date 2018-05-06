@@ -1,6 +1,6 @@
-pkg_name=etcd31
+pkg_name=etcd32
 pkg_origin=ncerny
-pkg_version="v3.1.13"
+pkg_version="v3.2.18"
 pkg_maintainer="The Habitat Maintainers <humans@habitat.sh>"
 pkg_license=("Apache-2.0")
 pkg_deps=(ncerny/etcd/${pkg_version})

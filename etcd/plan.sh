@@ -1,43 +1,21 @@
 pkg_origin=ncerny
 pkg_name=etcd
 pkg_description="Distributed reliable key-value store for the most critical data of a distributed system"
-pkg_version="v3.3.0"
+pkg_version="v3.2.18"
+pkg_shasum="b729db0732448064271ea6fdcb901773c4fe917763ca07776f22d0e5e0bd4097"
 pkg_maintainer="Nathan Cerny <ncerny@gmail.com>"
 pkg_license=('Apache-2.0')
-pkg_deps=(ncerny/cfssl)
-pkg_exports=(
-  [client-port]=etcd-client-end
-  [server-port]=etcd-server-end
-)
-
-pkg_exposes=(client-port server-port)
-pkg_binds_optional=(
-  [ca]="api"
-)
-
+pkg_deps=(core/glibc)
+pkg_build_deps=(core/gnupg)
+pkg_bin_dirs=(usr/bin)
 pkg_svc_user="root"
-#
-# do_build(){
-#   return 0
-# }
-#
-# do_install(){
-#   return 0
-# }
-
-
-# From core/etcd
 pkg_source="https://github.com/coreos/etcd/releases/download/${pkg_version}/etcd-${pkg_version}-linux-amd64.tar.gz"
 asc_source="${pkg_source}.asc"
 pkg_filename="etcd-${pkg_version}-linux-amd64.tar.gz"
 asc_filename="${pkg_filename}.asc"
-pkg_shasum="d91efb17ab0813039e24863a1af154b153d4b1a009181d6faa18e8ab681676dc"
-asc_shasum="5e0b94b39a5a08e4551c428d7774fc0743e467d993464c19df36b36188402fcb"
+asc_shasum="e48a7913b1aeef1a6f58133d9415e9df32bd6db2faa01a826c12ced4f51c29ce"
 pkg_dirname="etcd-${pkg_version}-linux-amd64"
 pkg_upstream_url="https://github.com/coreos/etcd/releases/"
-pkg_deps=(core/curl)
-pkg_build_deps=(core/gnupg)
-pkg_bin_dirs=(usr/bin)
 
 do_download() {
   do_default_download

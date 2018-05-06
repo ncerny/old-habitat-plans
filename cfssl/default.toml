@@ -5,15 +5,6 @@
 [api]
   port = 8888
 
-[root]
-
-[root.signing.default]
-  expiry = "43830h"
-  usages = ["cert sign"]
-
-[root.signing.default.ca_constraint]
-  is_ca = "true"
-
 [config]
 
 [config.signing.default]
@@ -21,7 +12,7 @@
   usages = ["signing", "key encipherment", "server auth", "client auth"]
 
 [config.profiles.ca]
-  expiry = "8760h"
+  expiry = "43830h"
   usages = ["cert sign"]
 
 [config.profiles.ca.ca_constraint]
@@ -49,7 +40,7 @@
 
 [[ca.names]]
   C = "US"
-  L = "Overland Park"
-  O = "Cerny"
+  L = ""
+  O = ""
   OU = "CA"
-  ST = "Kansas"
+  ST = ""

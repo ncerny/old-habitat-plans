@@ -1,0 +1,45 @@
+#!/bin/bash
+
+mkdir -p /var/lib/etcd
+
+cd {{pkg.svc_static_path}}
+
+ca_update ca
+if [[ ! $(cert_verify {{sys.hostname}}-server.pem {{sys.hostname}} {{sys.ip}}) ]]; then
+	cert_gen {{sys.hostname}}-server.pem server {{pkg.svc_config_path}}/csr.json
+fi
+if [[ ! $(cert_verify {{sys.hostname}}-client.pem {{sys.hostname}} {{sys.ip}}) ]]; then
+	cert_gen {{sys.hostname}}-client.pem client {{pkg.svc_config_path}}/csr.json
+fi
+if [[ ! $(cert_verify {{sys.hostname}}-peer.pem {{sys.hostname}} {{sys.ip}}) ]]; then
+	cert_gen {{sys.hostname}}-peer.pem peer {{pkg.svc_config_path}}/csr.json
+fi
+
+
+{{~#if svc.me.leader}}
+	if [[ -z "{{cfg.etcd-initial-cluster-token}}" ]]; then
+  	group="{{pkg.name}}.$(awk '/group/ { print $3 }' /hab/sup/default/specs/{{pkg.name}}.spec)"
+  	echo "etcd-initial-cluster-token = '$(openssl rand -hex 128)'" | hab-butterfly config apply ${group//\"/} $(date +%s)
+	fi
+{{~else}}
+	while [[ -z "{{cfg.etcd-initial-cluster-token}}" ]]; do
+		echo "Waiting for etcd-initial-cluster-token to be set."
+		sleep 15
+		exit 1
+	done
+	{{#with svc.leader as |leader|}}
+	  clusterver=$(curl -k https://{{leader.sys.ip}}:{{../cfg.etcd-server-end}}/version | jq .etcdcluster)
+		export ETCDCTL_ENDPOINTS=https://{{leader.sys.ip}}:{{../cfg.etcd-client-end}}
+	{{/with ~}}
+  if [[ -n "$clusterver" ]] && [[ ! "$clusterver" == '"not_decided"' ]] && [[ ! -d "{{pkg.svc_data_path}}/member" ]]; then
+		export ETCDCTL_API=3
+		export ETCDCTL_CACERT={{pkg.svc_static_path}}/ca.pem
+		export ETCDCTL_CERT={{pkg.svc_static_path}}/{{sys.hostname}}-client.pem
+		export ETCDCTL_KEY={{pkg.svc_static_path}}/{{sys.hostname}}-client-key.pem
+		listen_ip="{{sys.ip}}"
+		if [[ -n "{{cfg.etcd-listen-host-ip}}" ]]; then
+			listen_ip="{{cfg.etcd-listen-host-ip}}"
+		fi
+		etcdctl member add {{sys.hostname}} --peer-urls=https://${listen_ip}:{{cfg.etcd-server-end}}
+  fi
+{{~/if}}

@@ -4,7 +4,7 @@
 
 service-cluster-ip-range = "10.32.0.0/24"
 service-node-port-range = "30000-32767"
-
+secure-port = "6443"
 [external]
 name = ""
 ip = ""

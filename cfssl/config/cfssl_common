@@ -14,7 +14,6 @@ CERT_EXPIRED=3
 	export ca_url='http://{{leader.sys.ip}}:{{leader.cfg.api}}/api/v1/cfssl'
 {{/with ~}}
 
-
 join_by() { local IFS="$1"; shift; echo "$*"; }
 log_error() { if [ "$VERBOSITY" -ge 0 ]; then echo "$(date +"$FMT") [ERROR] $*"; fi }
 log_warn()  { if [ "$VERBOSITY" -ge 2 ]; then echo "$(date +"$FMT") [WARN ] $*"; fi }

@@ -22,13 +22,13 @@ cd {{pkg.svc_data_path}}
       ;;
     "CERT_EXPIRED")
       log info "Renewing current certificate authority."
-      cfssl gencert -renewca -ca "${ca}" -ca-key "${key}" -config "{{pkg.svc_config_path}}/root-config.json" | cfssljson -bare ca
+      cfssl gencert -renewca -ca "${ca}" -ca-key "${key}" -config "{{pkg.svc_config_path}}/config.json" | cfssljson -bare ca
       cert_upload ${group} ca.pem ca-key.pem
       rm ca.pem ca-key.pem
       ;;
     *)
       log info "Generating new certificate authority."
-      cfssl gencert -initca "{{pkg.svc_config_path}}/ca-csr.json" -config "{{pkg.svc_config_path}}/root-config.json" | cfssljson -bare ca
+      cfssl gencert -initca "{{pkg.svc_config_path}}/ca-csr.json" -config "{{pkg.svc_config_path}}/config.json" | cfssljson -bare ca
       cert_upload ${group} ca.pem ca-key.pem
       rm ca.pem ca-key.pem ca.csr
 	    ;;

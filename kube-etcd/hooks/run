@@ -4,15 +4,21 @@ exec 2>&1
 
 cd {{pkg.svc_path}}
 
+nodes="{{#each svc.members as |member| ~}}{{member.sys.hostname}}=https://{{member.sys.ip}}:{{../cfg.etcd-server-end}},{{/each ~}}"
+
 listen_ip="{{sys.ip}}"
 if [[ -n "{{cfg.etcd-listen-host-ip}}" ]]; then
   listen_ip="{{cfg.etcd-listen-host-ip}}"
 fi
 
-nodes="{{#each svc.members as |member| ~}}{{member.sys.hostname}}=https://{{member.sys.ip}}:{{../cfg.etcd-server-end}},{{/each ~}}"
-if [[ -n "{{cfg.etcd-initial-cluster}}" ]]; then
-  nodes="{{cfg.etcd-initial-cluster}}"
-fi
+{{#with svc.leader as |leader|}}
+  clusterver=$(curl -k https://{{leader.sys.ip}}:{{../cfg.etcd-server-end}}/version | jq .etcdcluster)
+  if [[ "$clusterver" == '"not_decided"' ]] || [[ "$clusterver" == '' ]]; then
+    export ETCD_INITIAL_CLUSTER_STATE="new"
+  else
+    export ETCD_INITIAL_CLUSTER_STATE="existing"
+  fi
+{{/with ~}}
 
 export ETCD_NAME="{{sys.hostname}}"
 export ETCD_DATA_DIR="{{pkg.svc_data_path}}"
@@ -20,9 +26,7 @@ export ETCD_LISTEN_CLIENT_URLS="https://${listen_ip}:{{cfg.etcd-client-end}}"
 export ETCD_LISTEN_PEER_URLS="https://${listen_ip}:{{cfg.etcd-server-end}}"
 export ETCD_ADVERTISE_CLIENT_URLS="https://${listen_ip}:{{cfg.etcd-client-end}}"
 export ETCD_INITIAL_ADVERTISE_PEER_URLS="https://${listen_ip}:{{cfg.etcd-server-end}}"
-export ETCD_INITIAL_CLUSTER_TOKEN="{{cfg.etcd-initial-cluster-token}}"
-export ETCD_INITIAL_CLUSTER_STATE="{{cfg.etcd-initial-cluster-state}}"
-export ETCD_INITIAL_CLUSTER="$nodes"
+export ETCD_INITIAL_CLUSTER="${nodes}"
 export ETCD_CLIENT_CERT_AUTH="true"
 export ETCD_CERT_FILE="{{pkg.svc_static_path}}/{{sys.hostname}}-server.pem"
 export ETCD_KEY_FILE="{{pkg.svc_static_path}}/{{sys.hostname}}-server-key.pem"
@@ -30,5 +34,6 @@ export ETCD_TRUSTED_CA_FILE="{{pkg.svc_static_path}}/ca.pem"
 export ETCD_PEER_CERT_FILE="{{pkg.svc_static_path}}/{{sys.hostname}}-peer.pem"
 export ETCD_PEER_KEY_FILE="{{pkg.svc_static_path}}/{{sys.hostname}}-peer-key.pem"
 export ETCD_PEER_TRUSTED_CA_FILE="{{pkg.svc_static_path}}/ca.pem"
+export ETCD_INITIAL_CLUSTER_TOKEN="{{cfg.etcd-initial-cluster-token}}"
 
 exec etcd
