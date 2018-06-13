@@ -1,7 +1,7 @@
 pkg_name=kubernetes
 pkg_origin=ncerny
-pkg_version="1.10.2"
-pkg_shasum="350e48201e97c79639764e2380f3943aac944d602ad472f506be3f48923679d2"
+pkg_version="1.10.4"
+pkg_shasum="e2381459ba91674b5e5cc10c8e8d6dc910e71874d01165ca07a94188edc8505e"
 pkg_description="Production-Grade Container Scheduling and Management"
 pkg_upstream_url="https://github.com/kubernetes/kubernetes"
 # https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.10.md#downloads-for-v1101

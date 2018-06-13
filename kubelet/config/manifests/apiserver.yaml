@@ -1,0 +1,81 @@
+{
+  "kind": "Pod",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "kube-apiserver"
+  },
+  "spec": {
+    "hostNetwork": true,
+    "containers": [
+      {
+        "name": "kube-apiserver",
+        "image": "k8s.gcr.io/hyperkube:{{pkg.version}}",
+        "command": [
+          "/hyperkube",
+          "apiserver",
+          {{#each cfg.apiserver ~}}
+            --{{@key}}="{{this}}",
+          {{/each ~}}
+          "--client-ca-file=/srv/kubernetes/ca.pem",
+          "--experimental-encryption-provider-config=/srv/kubernetes/encryption-config.yaml",
+          "--kubelet-certificate-authority=/srv/kubernetes/ca.pem",
+          "--kubelet-client-certificate=/srv/kubernetes/{{sys.hostname}}.pem",
+          "--kubelet-client-key=/srv/kubernetes/{{sys.hostname}}-key.pem",
+          "--kubelet-https=true",
+          "--cert-dir=/srv/kubernetes",
+          "--tls-ca-file=/srv/kubernetes/ca.pem",
+          "--tls-cert-file=/srv/kubernetes/kubernetes.pem",
+          "--tls-private-key-file=/srv/kubernetes/kubernetes-key.pem"
+        ],
+        "ports": [
+          {
+            "name": "https",
+            "hostPort": 443,
+            "containerPort": 443
+          },
+          {
+            "name": "local",
+            "hostPort": 8080,
+            "containerPort": 8080
+          }
+        ],
+        "volumeMounts": [
+          {
+            "name": "srvkube",
+            "mountPath": "/srv/kubernetes",
+            "readOnly": true
+          },
+          {
+            "name": "etcssl",
+            "mountPath": "/etc/ssl",
+            "readOnly": true
+          }
+        ],
+        "livenessProbe": {
+          "httpGet": {
+            "scheme": "HTTP",
+            "host": "127.0.0.1",
+            "port": 8080,
+            "path": "/healthz"
+          },
+          "initialDelaySeconds": 15,
+          "timeoutSeconds": 15
+        }
+      }
+    ],
+    "volumes": [
+      {
+        "name": "srvkube",
+        "hostPath": {
+          "path": "{{pkg.svc_static_path}}"
+        }
+      },
+      {
+        "name": "etcssl",
+        "hostPath": {
+          "path": "/etc/ssl"
+        }
+      }
+    ]
+  }
+}
