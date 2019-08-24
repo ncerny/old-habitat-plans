@@ -1,0 +1,46 @@
+{
+  "request": {
+    "CN": "system:node:{{sys.hostname}}",
+    "key": {
+      "algo": "rsa",
+      "size": 2048
+    },
+    "hosts": [
+      "{{sys.hostname}}",
+      "{{sys.ip}}"
+    ],
+    "names": [
+      {
+        "C": "US",
+        "L": "Overland Park",
+        "O": "system:nodes",
+        "OU": "Kubernetes",
+        "ST": "Kansas"
+      }
+    ]
+  },
+  "private_key": {
+    "path": "{{pkg.svc_static_path}}/{{sys.hostname}}-key.pem",
+    "owner": "hab",
+    "group": "hab"
+  },
+  "certificate": {
+    "path": "{{pkg.svc_static_path}}/{{sys.hostname}}.pem",
+    "owner": "hab",
+    "group": "hab"
+  },
+  "authority": {
+    {{#eachAlive bind.ca.members as |member| ~}}
+    {{#if @first ~}}
+    "remote": "{{member.sys.ip}}:{{member.cfg.port}}",
+    {{/if ~}}
+    {{/eachAlive ~}}
+    "label": "ca",
+    "profile": "peer",
+    "file": {
+      "path": "{{pkg.svc_static_path}}/ca.pem",
+      "owner": "hab",
+      "group": "hab"
+    }
+  }
+}

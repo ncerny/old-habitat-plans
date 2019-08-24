@@ -1,3 +1,0 @@
-{{~#with cfg}}
-{{~toJson ca }}
-{{~/with}}

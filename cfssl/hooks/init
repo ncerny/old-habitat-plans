@@ -6,31 +6,44 @@ key="${dir}/ca-key.pem"
 
 cd {{pkg.svc_data_path}}
 
+cert_upload() {
+  for cert in $*; do
+    hab-butterfly file upload ${group} ${version} ${cert}
+  done
+}
+
 {{~#if svc.me.follower}}
-  if [ ! -f "$ca" ]; then
+  if [ ! -f "${ca}" ]; then
     sleep 1
     exit 1
   fi
 {{~else}}
-  source /hab/svc/cfssl/config/cfssl_common
   group="{{pkg.name}}.$(awk '/group/ { print $3 }' /hab/sup/default/specs/{{pkg.name}}.spec)"
   group=${group//\"/}
-  log info "Checking Certificate Authority validity."
-  case $(cert_verify_local ${ca}) in
-    "CERT_VALID")
-      log info "Certificate Authority is valid."
-      ;;
-    "CERT_EXPIRED")
-      log info "Renewing current certificate authority."
-      cfssl gencert -renewca -ca "${ca}" -ca-key "${key}" -config "{{pkg.svc_config_path}}/config.json" | cfssljson -bare ca
-      cert_upload ${group} ca.pem ca-key.pem
-      rm ca.pem ca-key.pem
-      ;;
-    *)
-      log info "Generating new certificate authority."
-      cfssl gencert -initca "{{pkg.svc_config_path}}/ca-csr.json" -config "{{pkg.svc_config_path}}/config.json" | cfssljson -bare ca
-      cert_upload ${group} ca.pem ca-key.pem
+  version=$(date +%s)
+
+  echo "Checking Certificate Authority validity."
+  if [ -f "${ca}" ]; then
+    certinfo=$(cfssl certinfo -cert ${ca})
+    cert_exp=$(echo ${certinfo} | jq .not_after)
+    cert_exp="${cert_exp/T/ }"
+    cert_exp="${cert_exp//[Z\"]/}"
+    calc_exp=$(date +%s -d "${cert_exp}")
+    renew=$(( $(date +%s)+30*60*60*24 ))
+    if [[ $cert_exp < $renew ]]; then
+      echo "Renewing current Certificate Authority."
+      cfssl gencert -renewca -ca "${ca}" -ca-key "${key}" -config "{{pkg.path}}/csr/config.json" | cfssljson -bare ca
+      cert_upload ca.pem ca-key.pem ca.csr
       rm ca.pem ca-key.pem ca.csr
-	    ;;
-  esac
+      sleep 10
+    else
+      echo "Certificate Authority Valid."
+    fi
+  else
+    echo "Generating new Certificate Authority."
+    cfssl gencert -initca "{{pkg.path}}/csr/ca-csr.json" -config "{{pkg.path}}/csr/config.json" | cfssljson -bare ca
+    cert_upload ca.pem ca-key.pem ca.csr
+    rm ca.pem ca-key.pem ca.csr
+    sleep 10
+  fi
 {{/if ~}}

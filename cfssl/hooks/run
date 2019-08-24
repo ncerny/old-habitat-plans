@@ -5,8 +5,13 @@ cd {{pkg.svc_data_path}}
 
 exec cfssl serve \
   -address {{sys.ip}} \
-  -port {{cfg.api.port}} \
+  -port {{cfg.port}} \
   -ca {{pkg.svc_files_path}}/ca.pem \
   -ca-key {{pkg.svc_files_path}}/ca-key.pem \
   -int-dir {{pkg.svc_files_path}} \
-  -config {{pkg.svc_config_path}}/config.json
+  {{#if svc.me.follower ~}}
+  {{#with svc.leader as |leader| ~}}
+  -remote {{leader.sys.ip}}:{{leader.cfg.port}}
+  {{/with ~}}
+  {{/if ~}}
+  -config {{pkg.path}}/csr/config.json

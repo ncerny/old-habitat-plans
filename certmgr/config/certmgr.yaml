@@ -1,0 +1,9 @@
+dir: {{cfg.specdir}}
+{{#eachAlive bind.ca.members as |member| ~}}
+{{#if @first ~}}
+default_remote: {{member.sys.ip}}:{{member.cfg.port}}
+{{/if ~}}
+{{/eachAlive ~}}
+svcmgr: dummy
+before: 72h
+interval: 30m

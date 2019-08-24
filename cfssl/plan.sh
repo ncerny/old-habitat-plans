@@ -19,11 +19,12 @@ pkg_files=(
   ["mkbundle"]="88f90fa9120662c3acdbbedd22306f4cf7ae71e9708838a6d5c8f1652b5bf747"
   ["multirootca"]="7b7884ae113eb7693591194399d424bd39902252c3198d6dea075ac98b3f275d"
 )
-pkg_exports=(
-  [api]=api.port
-)
 
-pkg_exposes=(api)
+pkg_exports=(
+  [port]=port
+)
+pkg_exposes=(port)
+
 
 do_download() {
   mkdir -p $HAB_CACHE_SRC_PATH/$pkg_dirname
@@ -46,9 +47,7 @@ do_install() {
   for file in ${!pkg_files[@]}; do
     install -v -D "$HAB_CACHE_SRC_PATH/$file" "$pkg_prefix/bin/$file"
   done
-  for file in $(ls bin); do
-    install -v -D "bin/$file" "$pkg_prefix/bin/$file"
-  done
+  cp -r csr $pkg_prefix/
 }
 
 do_strip() {

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-exec 2>&1
-
 cd "{{pkg.svc_path}}"
 
 ca_update '{{pkg.svc_static_path}}/ca'
@@ -43,9 +41,11 @@ EOF
   rm {{pkg.svc_static_path}}/encryption-config.yaml
 fi
 
-{{#else}}
+{{else}}
 
 if [ ! -f "{{pkg.svc_files_path}}/kubernetes.pem" ] || [ ! -f "{{pkg.svc_files_path}}/encryption-config.yaml" ]; then
   sleep 10
   exit 1
 fi
+
+{{/if}}
